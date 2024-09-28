@@ -18,17 +18,22 @@ func ValidateJSON(input map[string]interface{}, rules []ValidationRule) (map[str
 	validated := make(map[string]interface{})
 	for _, rule := range rules {
 		value, exists := input[rule.Field]
+		isValid := isValidType(value, rule.Type)
 
 		if rule.Required {
 			if !exists {
 				return nil, fmt.Errorf("required field '%s' is missing", rule.Field)
 			}
 
-			isValid := isValidType(value, rule.Type)
 			if !isValid {
 				return nil, fmt.Errorf("required field '%s' value is not valid", rule.Field)
 			}
 
+			validated[rule.Field] = value
+			continue
+		}
+
+		if exists && isValid {
 			validated[rule.Field] = value
 		}
 	}
@@ -65,6 +70,7 @@ func main() {
 			{"a", "string", true},
 			{"b", "number", true},
 			{"c", "bool", true},
+			{"d", "string", false},
 		}
 
 		validatedJSON, err := ValidateJSON(input, rules)
@@ -77,7 +83,7 @@ func main() {
 			validatedOutput, _ := json.Marshal(validatedJSON)
 			fmt.Println("Validated JSON:", string(validatedOutput))
 		}
-		return c.JSON(input)
+		return c.JSON(validatedJSON)
 	})
 
 	app.Listen(":8881")
