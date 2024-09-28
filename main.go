@@ -18,24 +18,21 @@ func ValidateJSON(input map[string]interface{}, rules []ValidationRule) (map[str
 	validated := make(map[string]interface{})
 	for _, rule := range rules {
 		value, exists := input[rule.Field]
-		isValid := isValidType(value, rule.Type)
 
 		if rule.Required {
 			if !exists {
 				return nil, fmt.Errorf("required field '%s' is missing", rule.Field)
 			}
 
-			if !isValid {
+			if !isValidType(value, rule.Type) {
 				return nil, fmt.Errorf("required field '%s' value is not valid", rule.Field)
 			}
-
-			validated[rule.Field] = value
-			continue
+		} else {
+			if !exists || !isValidType(value, rule.Type) {
+				continue
+			}
 		}
-
-		if exists && isValid {
-			validated[rule.Field] = value
-		}
+		validated[rule.Field] = value
 	}
 	return validated, nil
 }
